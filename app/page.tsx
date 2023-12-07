@@ -46,10 +46,12 @@ export default function Home() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const debouncedSearch = useDebounce(searchVal, 600);
+  const debouncedPagination = useDebounce(currentPage, 500);
 
   const fetchData = async () => {    
+    
     const allNews = await axios.get(`https://api.nytimes.com/svc/search/v2/articlesearch.json?page=${currentPage-1}&sort=relevance${searchVal !== '' ? '&fq='+searchVal:''}&api-key=kubIq08I8Ejy6ppr7IYpfhsSVxLvXuNx`);
-    console.log('masuk', allNews);
+    
     setListNews(allNews.data.response.docs);
     let pages = Math.ceil(allNews.data.response.meta.hits / 10);
     if (pages > 200) pages = 200;
@@ -62,8 +64,9 @@ export default function Home() {
   },[debouncedSearch]);
 
   useEffect(() => {
-    fetchData();
-  },[currentPage]);
+    if(listNews !== null)fetchData();
+  },[debouncedPagination]);
+
 
   return (
     <main className={styles.main}>
@@ -78,29 +81,36 @@ export default function Home() {
                 setSearchVal(e.currentTarget.value);
               }}
               value={searchVal}
+              disabled={listNews === null}
             />
             <Search />
           </div>        
       </div>     
-
-      <div className={styles.grid}>
-        {listNews !== null && listNews.map((news, index) => (        
-          <a
-            href={news.web_url}
-            className={styles.card}
-            target="_blank"
-            rel="noopener noreferrer"
-            key={index}
-          >
-            <h2>
-              {news.headline.main}
-            </h2>
-            <legend>{news.byline.original}<br /> {moment(news.pub_date).format("LLL")}</legend>
-            <p>{news.abstract}</p>
-          </a>
-        ))}
-      </div>
-
+      
+      {listNews === null ?
+        <div className={styles.loading}>
+            Loading...
+        </div>
+      :
+        <div className={styles.grid}>        
+          {listNews.map((news, index) => (        
+            <a
+              href={news.web_url}
+              className={styles.card}
+              target="_blank"
+              rel="noopener noreferrer"
+              key={index}
+            >
+              <h2>
+                {news.headline.main}
+              </h2>
+              <legend>{news.byline.original}<br /> {moment(news.pub_date).format("LLL")}</legend>
+              <p>{news.abstract}</p>
+            </a>
+          ))}        
+        </div>
+      }
+      {listNews !== null &&
       <div className={styles.pagination}>
         <div
           className={`${styles.wrapPgnArrow} ${currentPage === 1 || totalPages === 0 ? styles.disabled : ""}`}
@@ -120,6 +130,7 @@ export default function Home() {
           <ArrowLeft/>
         </div>
       </div>
+      }
     </main>
   )
 }

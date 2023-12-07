@@ -27,6 +27,18 @@
   width: var(--max-width);
 }
 
+.loading{
+  width: 100%;
+  min-height: 300px;
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 160%;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 .card {
   padding: 1rem 1.2rem;
   border-radius: var(--border-radius);
