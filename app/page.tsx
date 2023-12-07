@@ -1,94 +1,124 @@
-import Image from 'next/image'
-import styles from './page.module.css'
+"use client";
+
+import styles from './page.module.scss'
+import { useEffect, useState } from 'react'
+import axios from 'axios'
+import Search from './component/Search/page'
+import ArrowLeft from './component/ArrowLeft/page';
+import useDebounce from './actions/useDebounce';
+import moment from 'moment';
+
+type News = {
+    abstract: string;
+    web_url: string;
+    snippet: string;
+    lead_paragraph: string;
+    source: string;
+    multimedia: string[];
+    headline: {
+        main: string;
+        kicker: string;
+        content_kicker: string;
+        print_headline: string;
+        name: string;
+        seo: string;
+        sub: string;
+    },
+    keywords: object[];
+    pub_date: string;
+    document_type: string;
+    news_desk: string;
+    section_name: string;
+    byline: {
+        original: string;
+        person: object[];
+        organization: string;
+    },
+    type_of_material: string;
+    _id: string;
+    word_count: number,
+    uri: string;
+}
 
 export default function Home() {
+  const [listNews, setListNews] = useState<News[] | null>(null);
+  const [searchVal, setSearchVal] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const debouncedSearch = useDebounce(searchVal, 600);
+
+  const fetchData = async () => {    
+    const allNews = await axios.get(`https://api.nytimes.com/svc/search/v2/articlesearch.json?page=${currentPage-1}&sort=relevance${searchVal !== '' ? '&fq='+searchVal:''}&api-key=kubIq08I8Ejy6ppr7IYpfhsSVxLvXuNx`);
+    console.log('masuk', allNews);
+    setListNews(allNews.data.response.docs);
+    let pages = Math.ceil(allNews.data.response.meta.hits / 10);
+    if (pages > 200) pages = 200;
+    setTotalPages(pages);
+  }
+  
+  useEffect(() => {
+    setCurrentPage(1);
+    fetchData();
+  },[debouncedSearch]);
+
+  useEffect(() => {
+    fetchData();
+  },[currentPage]);
+
   return (
     <main className={styles.main}>
       <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>app/page.tsx</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
+        <div className={styles.boxSearch}>
+            <input
+              id="id"
+              type="text"
+              className={`form-controls ${styles.inputSearch}`}
+              placeholder="Search News"
+              onChange={(e) => {
+                setSearchVal(e.currentTarget.value);
+              }}
+              value={searchVal}
             />
-          </a>
-        </div>
-      </div>
-
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
+            <Search />
+          </div>        
+      </div>     
 
       <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
+        {listNews !== null && listNews.map((news, index) => (        
+          <a
+            href={news.web_url}
+            className={styles.card}
+            target="_blank"
+            rel="noopener noreferrer"
+            key={index}
+          >
+            <h2>
+              {news.headline.main}
+            </h2>
+            <legend>{news.byline.original}<br /> {moment(news.pub_date).format("LLL")}</legend>
+            <p>{news.abstract}</p>
+          </a>
+        ))}
+      </div>
 
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
+      <div className={styles.pagination}>
+        <div
+          className={`${styles.wrapPgnArrow} ${currentPage === 1 || totalPages === 0 ? styles.disabled : ""}`}
+          onClick={() => setCurrentPage(currentPage-1)}
         >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
+          <ArrowLeft />
+        </div>
+        <div className={`${styles.textPagination} d-flex`}>
+          Page {currentPage} of {totalPages !== 0 ? totalPages : "1"}
+        </div>
+        <div
+          className={`${styles.wrapPgnArrow} ${styles.right} ${
+            currentPage === totalPages || totalPages === 0 ? styles.disabled : ""
+          }`}
+          onClick={() => setCurrentPage(currentPage+1)}
         >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore the Next.js 13 playground.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
+          <ArrowLeft/>
+        </div>
       </div>
     </main>
   )
