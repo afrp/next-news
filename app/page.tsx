@@ -48,24 +48,24 @@ export default function Home() {
   const debouncedSearch = useDebounce(searchVal, 600);
   const debouncedPagination = useDebounce(currentPage, 500);
 
-  const fetchData = async () => {    
-    
-    const allNews = await axios.get(`https://api.nytimes.com/svc/search/v2/articlesearch.json?page=${currentPage-1}&sort=relevance${searchVal !== '' ? '&fq='+searchVal:''}&api-key=kubIq08I8Ejy6ppr7IYpfhsSVxLvXuNx`);
-    
-    setListNews(allNews.data.response.docs);
-    let pages = Math.ceil(allNews.data.response.meta.hits / 10);
-    if (pages > 200) pages = 200;
-    setTotalPages(pages);
-  }
   
   useEffect(() => {
     setCurrentPage(1);
-    fetchData();
-  },[debouncedSearch]);
+  },[searchVal]);
 
   useEffect(() => {
-    if(listNews !== null)fetchData();
-  },[debouncedPagination]);
+    const fetchData = async () => {    
+    
+      const allNews = await axios.get(`https://api.nytimes.com/svc/search/v2/articlesearch.json?page=${currentPage-1}&sort=relevance${searchVal !== '' ? '&fq='+searchVal:''}&api-key=kubIq08I8Ejy6ppr7IYpfhsSVxLvXuNx`);
+      
+      setListNews(allNews.data.response.docs);
+      let pages = Math.ceil(allNews.data.response.meta.hits / 10);
+      if (pages > 200) pages = 200;
+      setTotalPages(pages);
+    };
+
+    fetchData();
+  },[debouncedPagination, debouncedSearch]);
 
 
   return (
