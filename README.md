@@ -11,12 +11,16 @@ yarn dev
 
 ```
 
+To Build:
+
 ```Production
 npm run build
 # or
 yarn build
 
 ```
+
+To Test:
 
 ```Test
 npm run test:cover
